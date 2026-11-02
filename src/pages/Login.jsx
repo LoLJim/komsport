@@ -30,13 +30,13 @@ export default function Login() {
           Войдите, чтобы управлять командой, следить за турнирами и открывать новые возможности в Компорте.
         </p>
 
-        {/* Форма */}
+        {/* Форма (вернул тег <form>) */}
         <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Email или телефон</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700">Email</label>
             <input 
-              type="text" 
-              placeholder="name@company.ru или +7 (999) 000-00-00" 
+              type="email" 
+              placeholder="name@company.ru" 
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
