@@ -9,6 +9,8 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
+import TeamPage from './pages/TeamPage';
+import PlayerPage from './pages/PlayerPage';
 
 // Вспомогательный компонент для страниц, где НУЖНЫ Header и Footer
 function LayoutWithHeader() {
@@ -35,6 +37,8 @@ function App() {
         <Route path="/forgot-password" element={<><ScrollToTop /><ForgotPassword /></>} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/team/:id" element={<TeamPage />} />
+        <Route path="/player/:id" element={<PlayerPage />} />
         
         {/* 2. СТРАНИЦЫ С ШАПКОЙ И ПОДВАЛОМ */}
         <Route element={<LayoutWithHeader />}>

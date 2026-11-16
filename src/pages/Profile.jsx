@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Добавили useNavigate
 
 export default function Profile() {
+  const navigate = useNavigate(); // Инициализация навигации
   const [activeTab, setActiveTab] = useState('profile');
 
-  // 1. Добавили поле avatar в состояние профиля
   const [profileData, setProfileData] = useState({
     firstName: 'Иван',
     lastName: 'Петров',
@@ -12,11 +12,14 @@ export default function Profile() {
     age: '',
     rank: '',
     team: '',
-    avatar: '' // Здесь будет храниться картинка в формате Base64
+    teamId: null,
+    avatar: '' 
   });
 
+  const [teamInput, setTeamInput] = useState('');
+  const [showTeamSuggestions, setShowTeamSuggestions] = useState(false);
+
   const [myTournaments, setMyTournaments] = useState([]);
-  
   const [myStats, setMyStats] = useState([
     { label: "Игр сыграно", value: 0 },
     { label: "Голов", value: 0 },
@@ -24,11 +27,23 @@ export default function Profile() {
     { label: "Наград", value: 0 },
   ]);
 
+  const availableTeams = [
+    { id: 1, name: "Спартак-Арена" },
+    { id: 2, name: "Динамо" },
+    { id: 3, name: "ФК Юность" },
+    { id: 4, name: "Локомотив" },
+    { id: 5, name: "ЦСКА" },
+    { id: 6, name: "Зенит" },
+    { id: 7, name: "Рубин" },
+    { id: 8, name: "Краснодар" }
+  ];
+
   useEffect(() => {
-    // Используем ключ 'userProfile_v3', так как добавилось новое поле
-    const savedData = localStorage.getItem('userProfile_v3');
+    const savedData = localStorage.getItem('userProfile_v4');
     if (savedData) {
-      setProfileData(JSON.parse(savedData));
+      const parsed = JSON.parse(savedData);
+      setProfileData(parsed);
+      setTeamInput(parsed.team || ''); 
     }
 
     const savedTournaments = localStorage.getItem('myTournaments');
@@ -42,33 +57,55 @@ export default function Profile() {
     }
   }, []);
 
-  // Сохранение профиля
   const handleSaveSettings = (e) => {
     e.preventDefault();
-    localStorage.setItem('userProfile_v3', JSON.stringify(profileData));
+
+    const teamExists = availableTeams.find(t => t.name.toLowerCase() === teamInput.toLowerCase());
+
+    if (teamInput !== '' && !teamExists) {
+      alert('Ошибка: Такой команды не существует в базе. Пожалуйста, выберите из списка.');
+      return;
+    }
+
+    const updatedProfile = {
+      ...profileData,
+      team: teamExists ? teamExists.name : '',
+      teamId: teamExists ? teamExists.id : null
+    };
+
+    setProfileData(updatedProfile);
+    localStorage.setItem('userProfile_v4', JSON.stringify(updatedProfile));
     alert('Данные профиля успешно сохранены!');
     setActiveTab('profile'); 
   };
 
-  // Обработчик текстовых полей
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 2. ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ И КОНВЕРТАЦИИ ФОТО
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // FileReader читает файл и превращает его в строку Base64
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Сохраняем эту строку в наше состояние
-        setProfileData(prev => ({ ...prev, avatar: reader.result }));
+        const updatedProfile = { ...profileData, avatar: reader.result };
+        setProfileData(updatedProfile);
+        localStorage.setItem('userProfile_v4', JSON.stringify(updatedProfile));
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const handleSelectTeam = (team) => {
+    setProfileData(prev => ({ ...prev, team: team.name, teamId: team.id }));
+    setTeamInput(team.name);
+    setShowTeamSuggestions(false);
+  };
+
+  const filteredTeams = availableTeams.filter(team => 
+    team.name.toLowerCase().includes(teamInput.toLowerCase())
+  );
 
   const handleAddTournament = () => {
     if (myTournaments.length > 0) return alert("Турнир уже добавлен!");
@@ -104,8 +141,7 @@ export default function Profile() {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       
-      {/* ================= БОКОВОЕ МЕНЮ ================= */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
+      <aside className="w-64 bg-white border-r border-gray-200 flex-col justify-between hidden md:flex sticky top-0 h-screen">
         <div>
           <div className="h-16 flex items-center px-6 border-b border-gray-100">
             <Link to="/" className="flex items-center gap-2">
@@ -118,7 +154,6 @@ export default function Profile() {
 
           <div className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              {/* 3. АВАТАРКА В МЕНЮ: показываем фото, если оно есть, иначе инициалы */}
               {profileData.avatar ? (
                 <img src={profileData.avatar} alt="Avatar" className="w-12 h-12 object-cover rounded-full border border-gray-200" />
               ) : (
@@ -149,14 +184,17 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* ИСПРАВЛЕНО: Кнопка "Выйти" теперь возвращает назад */}
         <div className="p-4 border-t border-gray-100">
-          <Link to="/" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
             <span>↩</span> Выйти
-          </Link>
+          </button>
         </div>
       </aside>
 
-      {/* ================= ОСНОВНОЙ КОНТЕНТ ================= */}
       <main className="flex-1 p-8">
         <div className="max-w-5xl mx-auto">
           
@@ -178,14 +216,11 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* --- ВКЛАДКА 1: ПРОФИЛЬ --- */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Профиль участника</h2>
                 <div className="flex flex-col md:flex-row gap-6 items-start">
-                  
-                  {/* 4. БОЛЬШАЯ АВАТАРКА В КАРТОЧКЕ ПРОФИЛЯ */}
                   {profileData.avatar ? (
                     <img src={profileData.avatar} alt="Avatar" className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
                   ) : (
@@ -212,7 +247,13 @@ export default function Profile() {
                       <div>
                         <p className="text-gray-500 mb-1">Команда</p>
                         <p className="font-medium text-gray-900">
-                          {profileData.team || <span className="text-gray-400 font-normal">Не указана</span>}
+                          {profileData.team ? (
+                            <Link to={`/team/${profileData.teamId}`} className="text-blue-600 hover:underline">
+                              {profileData.team}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-400 font-normal">Не указана</span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -220,7 +261,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* ... Блоки "Мои турниры" и "Статистика" ... */}
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Мои турниры</h2>
@@ -255,7 +295,6 @@ export default function Profile() {
             </div>
           )}
 
-          {/* --- ВКЛАДКА 2: МОИ ТУРНИРЫ --- */}
           {activeTab === 'tournaments' && (
             <div>
               <div className="flex justify-between items-center mb-6">
@@ -290,7 +329,6 @@ export default function Profile() {
             </div>
           )}
 
-          {/* --- ВКЛАДКА 3: СТАТИСТИКА --- */}
           {activeTab === 'stats' && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Личная статистика</h2>
@@ -307,13 +345,11 @@ export default function Profile() {
             </div>
           )}
 
-          {/* --- ВКЛАДКА 4: НАСТРОЙКИ --- */}
           {activeTab === 'settings' && (
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Настройки профиля</h2>
               <form onSubmit={handleSaveSettings} className="space-y-5 max-w-lg">
                 
-                {/* 5. БЛОК ЗАГРУЗКИ ФОТОГРАФИИ */}
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">Фотография профиля</label>
                   <div className="flex items-center gap-4">
@@ -324,13 +360,7 @@ export default function Profile() {
                     )}
                     <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                       Выбрать фото
-                      {/* Скрытый инпут. Он срабатывает при клике на label */}
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageUpload} 
-                        className="hidden" 
-                      />
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   </div>
                 </div>
@@ -356,9 +386,42 @@ export default function Profile() {
                   <label className="block mb-1.5 text-sm font-medium text-gray-700">Спортивный ранг</label>
                   <input type="text" name="rank" value={profileData.rank} onChange={handleChange} placeholder="Например, КМС" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                 </div>
-                <div>
+                
+                <div className="relative">
                   <label className="block mb-1.5 text-sm font-medium text-gray-700">Команда</label>
-                  <input type="text" name="team" value={profileData.team} onChange={handleChange} placeholder="Название команды" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                  <input 
+                    type="text" 
+                    value={teamInput} 
+                    onChange={(e) => {
+                      setTeamInput(e.target.value);
+                      setShowTeamSuggestions(true);
+                      if (e.target.value === '') {
+                        setProfileData(prev => ({ ...prev, team: '', teamId: null }));
+                      }
+                    }}
+                    onFocus={() => setShowTeamSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowTeamSuggestions(false), 200)} 
+                    placeholder="Начните вводить название..." 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  
+                  {showTeamSuggestions && teamInput.length > 0 && (
+                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {filteredTeams.length > 0 ? (
+                        filteredTeams.map((team) => (
+                          <li 
+                            key={team.id} 
+                            onClick={() => handleSelectTeam(team)}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-sm text-gray-700"
+                          >
+                            {team.name}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-4 py-2 text-sm text-gray-400">Команда не найдена</li>
+                      )}
+                    </ul>
+                  )}
                 </div>
                 
                 <button type="submit" className="px-6 py-2.5 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 mt-2">
