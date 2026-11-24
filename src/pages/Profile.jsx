@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Добавили useNavigate
+import { Link, useNavigate } from 'react-router-dom';
+import EventCard from '../components/EventCard'; // Импорт карточки
 
 export default function Profile() {
-  const navigate = useNavigate(); // Инициализация навигации
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
 
   const [profileData, setProfileData] = useState({
@@ -109,8 +110,17 @@ export default function Profile() {
 
   const handleAddTournament = () => {
     if (myTournaments.length > 0) return alert("Турнир уже добавлен!");
+    // Добавляем startDate и endDate для теста
     const newTournament = {
-      id: Date.now(), title: "Кубок города по футболу", status: "Скоро", date: "18 окт", desc: "Групповой этап • Центральный стадион", time: "18:00 • Первый матч"
+      id: Date.now(), 
+      title: "Кубок города по футболу", 
+      status: "Скоро", 
+      startDate: "18 окт", 
+      endDate: "20 окт",
+      sport: "Футбол",
+      desc: "Групповой этап • Центральный стадион", 
+      participants: 12,
+      location: "Центральный стадион"
     };
     const newStats = [
       { label: "Игр сыграно", value: 1 }, { label: "Голов", value: 0 }, { label: "Побед", value: 0 }, { label: "Наград", value: 0 },
@@ -184,7 +194,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ИСПРАВЛЕНО: Кнопка "Выйти" теперь возвращает назад */}
         <div className="p-4 border-t border-gray-100">
           <button 
             onClick={() => navigate(-1)} 
@@ -275,7 +284,7 @@ export default function Profile() {
                      <div>
                         <span className={`text-xs px-2 py-1 rounded-md font-medium ${getStatusColor(myTournaments[0].status)}`}>{myTournaments[0].status}</span>
                         <h4 className="font-bold text-gray-900 mt-2">{myTournaments[0].title}</h4>
-                        <p className="text-sm text-gray-500">{myTournaments[0].desc}</p>
+                        <p className="text-sm text-gray-500">{myTournaments[0].sport} • {myTournaments[0].location}</p>
                      </div>
                   </div>
                 )}
@@ -309,20 +318,9 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* ИСПОЛЬЗУЕМ УНИВЕРСАЛЬНУЮ КАРТОЧКУ БЕЗ КНОПОК АДМИНА */}
                   {myTournaments.map((tour) => (
-                    <div key={tour.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-3">
-                          <span className={`text-xs px-2.5 py-1 rounded-md font-medium ${getStatusColor(tour.status)}`}>{tour.status}</span>
-                          <span className="text-xs text-gray-400">{tour.date}</span>
-                        </div>
-                        <h3 className="font-bold text-gray-900 mb-1">{tour.title}</h3>
-                        <p className="text-sm text-gray-500 mb-4">{tour.desc}</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 pt-4 border-t border-gray-100">
-                        <span>📍</span> {tour.time}
-                      </div>
-                    </div>
+                    <EventCard key={tour.id} event={tour} isAdminView={false} />
                   ))}
                 </div>
               )}

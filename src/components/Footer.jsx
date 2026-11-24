@@ -26,7 +26,6 @@ export default function Footer() {
                 <li><Link to="/" className="transition-colors hover:text-white">Главная</Link></li>
                 <li><Link to="/events" className="transition-colors hover:text-white">Мероприятия</Link></li>
                 <li><Link to="/tables" className="transition-colors hover:text-white">Турнирные таблицы</Link></li>
-                <li><Link to="/contacts" className="transition-colors hover:text-white">Контакты</Link></li>
               </ul>
             </div>
 
